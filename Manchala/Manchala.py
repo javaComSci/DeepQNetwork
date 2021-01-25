@@ -111,29 +111,58 @@ def fill_cup_ui(pygame, screen, board, old_board, start_row, start_col):
                     fill_pieces_ui(pygame, screen, row, col, board.cups[row][col].pieces)
     else:
         print("BEFORE!---------------------------------------------------", start_row, start_col, old_board.cups[start_row][start_col].pieces, board.cups[start_row][start_col].pieces )
-        print_pieces()
-        old_board.print_board()
-        board.print_board()
+        # print_pieces()
+        # old_board.print_board()
+        # board.print_board()
+        ellipses_movement = {}
+        for i in range(10):
+            ellipses_movement[i] = []
         for row in range(2):
             for col in range(7):
                 if old_board.cups[row][col].pieces != board.cups[row][col].pieces:
+                    # have to move pieces since the number of pieces do not match
                     if (start_row == row and start_col == col) == False:
                         num_movement = board.cups[row][col].pieces - old_board.cups[row][col].pieces
-                        # print("AT ", row, col, num_movement)
                         moved = 0
+                        # pieces already there
+                        for piece in pieces_per_location[(row, col)]:
+                            for i in range(10):
+                                ellipses_movement[i].append(piece)
+                        # new pieces going there
                         while moved < num_movement:
                             # old board had less pieces so need to move to here from starting position
                             piece_removed = pieces_per_location[(start_row, start_col)].pop(0)
-                            print(piece_removed)
+                            old_coordinates = (piece_removed[0], (piece_removed[1][0], piece_removed[1][1], piece_removed[1][2], piece_removed[1][3]))
                             piece_removed = fix_location(piece_removed, row, col)
+                            new_coordinates = (piece_removed[0], (piece_removed[1][0], piece_removed[1][1], piece_removed[1][2], piece_removed[1][3]))
                             pieces_per_location[(row, col)].append(piece_removed)
-                            print(piece_removed)
-                            # print(pieces_per_location[(start_row, start_col)], pieces_per_location[(row, col)])
+                            # movement for the piece that is going to the new spot
+                            width_movement = new_coordinates[1][0] - old_coordinates[1][0]
+                            height_movement = new_coordinates[1][1] - old_coordinates[1][1]
+                            for i in range(10):
+                                new_width_spot = old_coordinates[1][0] + i*(width_movement/10)
+                                new_height_spot = old_coordinates[1][1] + i*(height_movement/10)
+                                new_ellipse = (piece_removed[0], (new_width_spot, new_height_spot, piece_removed[1][2], piece_removed[1][3]))
+                                ellipses_movement[i].append(new_ellipse)
                             moved += 1
-        for row in range(2):
-            for col in range(7):
-                for piece in pieces_per_location[(row, col)]:
-                    pygame.draw.ellipse(screen, piece[0], piece[1])
+                else:
+                    # can keep these pieces are they are currently
+                    for piece in pieces_per_location[(row, col)]:
+                        for i in range(10):
+                            ellipses_movement[i].append(piece)
+        # show the pieces aalready at the starting location
+        for piece in pieces_per_location[(start_row, start_col)]:
+            for i in range(10):
+                ellipses_movement[i].append(piece)
+
+        t = 0
+        while t < 10:
+            fill_board_ui(pygame, screen)
+            for movement in ellipses_movement[t]:
+                pygame.draw.ellipse(screen, movement[0], movement[1])
+            t += 1
+            pygame.display.flip()
+            pygame.time.delay(30) 
         print_pieces()
         print("AFTER!---------------------------------------------------")
 
@@ -167,7 +196,6 @@ def play_game_with_ui(players):
                 pygame.display.flip()
                 pygame.time.delay(300) 
             turn = (turn + 1) % 2
-
 
 if __name__  == "__main__":
     players = [Random_Player(0), Random_Player(1)]
